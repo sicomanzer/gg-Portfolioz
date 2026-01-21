@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Stock } from '../types';
 import { calculateDDM, formatCurrency, formatNumber } from '../utils/calculations';
-import { TrashIcon, RefreshIcon, AlertCircleIcon } from './Icons';
+import { TrashIcon, RefreshIcon, AlertCircleIcon, InfoIcon } from './Icons';
 
 interface Props {
   stock: Stock;
@@ -69,6 +69,32 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
             />
             {stock.loading && (
                 <span className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] bg-blue-100 text-blue-600 px-1 rounded">Wait</span>
+            )}
+            
+            {/* Sources Tooltip */}
+            {!stock.loading && stock.sources && stock.sources.length > 0 && (
+              <div className="absolute top-1 right-1 group/source">
+                <div className="cursor-help text-blue-300 hover:text-blue-500 p-1">
+                   <InfoIcon className="w-3 h-3" />
+                </div>
+                <div className="hidden group-hover/source:block absolute left-0 top-full mt-1 w-64 bg-white border border-slate-200 shadow-xl rounded-lg p-2 z-50 text-xs text-left">
+                  <div className="font-semibold text-slate-700 mb-1 px-1 border-b border-slate-100 pb-1">Data Sources</div>
+                  <div className="max-h-32 overflow-y-auto">
+                  {stock.sources.map((source, idx) => (
+                    <a 
+                      key={idx} 
+                      href={source.uri} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block px-1 py-1.5 hover:bg-slate-50 text-blue-600 truncate rounded transition-colors"
+                      title={source.title}
+                    >
+                      {source.title || 'Source ' + (idx + 1)}
+                    </a>
+                  ))}
+                  </div>
+                </div>
+              </div>
             )}
         </div>
       </td>

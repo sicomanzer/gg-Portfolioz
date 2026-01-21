@@ -15,8 +15,12 @@ const PortfolioSummary: React.FC<Props> = ({ settings, onSettingsChange, onSave,
     : 0;
 
   const handleCapitalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value) || 0;
-    onSettingsChange({ ...settings, totalCapital: val });
+    // Remove commas to parse the actual number
+    const rawValue = e.target.value.replace(/,/g, '');
+    const val = parseFloat(rawValue);
+    
+    // Handle empty input or invalid numbers gracefully
+    onSettingsChange({ ...settings, totalCapital: isNaN(val) ? 0 : val });
   };
 
   const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,10 +35,11 @@ const PortfolioSummary: React.FC<Props> = ({ settings, onSettingsChange, onSave,
           <div className="flex flex-col gap-2 w-full md:w-1/3">
             <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Total Capital (THB)</label>
             <input
-              type="number"
-              value={settings.totalCapital}
+              type="text"
+              value={settings.totalCapital.toLocaleString()}
               onChange={handleCapitalChange}
               className="text-2xl font-bold text-slate-900 border-b-2 border-slate-200 focus:border-blue-500 outline-none transition-colors py-1 bg-transparent"
+              placeholder="0"
             />
           </div>
           

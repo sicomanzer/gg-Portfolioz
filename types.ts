@@ -13,6 +13,7 @@ export interface Stock {
   requiredReturn: number;
   loading: boolean;
   error?: string;
+  sources?: { title: string; uri: string }[];
 }
 
 export interface PortfolioSettings {

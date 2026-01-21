@@ -1,47 +1,73 @@
+import { GoogleGenAI, Type } from "@google/genai";
 import { Stock } from '../types';
-import { MOCK_DELAY_MS } from '../constants';
 
-// In a real Next.js app, this would be an API call to /api/stock/refresh
-// which would perform server-side scraping and yahoo-finance2 calls.
-// Since we are running in a client-side browser environment for this demo,
-// we simulate the data to respect CORS and security policies.
-
-const MOCK_DB: Record<string, Partial<Stock>> = {
-  'PTT': { price: 34.50, pe: 10.2, pbv: 0.85, de: 0.65, roe: 9.5, eps: 3.20, dividendBaht: 2.00 },
-  'AOT': { price: 65.25, pe: 75.4, pbv: 6.20, de: 1.20, roe: 12.4, eps: 0.85, dividendBaht: 0.40 },
-  'DELTA': { price: 78.00, pe: 65.5, pbv: 15.4, de: 0.30, roe: 25.6, eps: 1.10, dividendBaht: 0.60 },
-  'KBANK': { price: 125.50, pe: 8.4, pbv: 0.65, de: 0.90, roe: 8.8, eps: 14.50, dividendBaht: 4.50 },
-  'ADVANC': { price: 215.00, pe: 22.1, pbv: 7.80, de: 2.50, roe: 32.0, eps: 9.80, dividendBaht: 8.10 },
-  'SCC': { price: 254.00, pe: 15.6, pbv: 0.95, de: 0.70, roe: 6.5, eps: 18.20, dividendBaht: 6.00 },
-};
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const upperSymbol = symbol.toUpperCase();
-      const mockData = MOCK_DB[upperSymbol];
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Find the latest real-time financial market data for the stock symbol "${symbol}".
+      Focus on the primary listing exchange. If the symbol is a Thai stock (e.g. PTT, AOT, DELTA, KBANK), prioritize the Stock Exchange of Thailand (SET) data. If it is a global stock, use the major exchange (NASDAQ, NYSE).
+      
+      Extract the following specific values:
+      1. Current Stock Price
+      2. P/E Ratio (Price-to-Earnings)
+      3. P/BV Ratio (Price-to-Book Value)
+      4. Debt to Equity Ratio (D/E)
+      5. Return on Equity (ROE) as a percentage (e.g. 15 for 15%)
+      6. Earnings Per Share (EPS)
+      7. Latest Annual Dividend Amount (per share in local currency)
 
-      if (mockData) {
-        // Known mock data
-        resolve({
-          ...mockData,
-          yieldPercent: (mockData.dividendBaht! / mockData.price!) * 100
-        });
-      } else {
-        // Random generated data for unknown symbols to demonstrate functionality
-        const price = Math.random() * 100 + 10;
-        const div = price * (Math.random() * 0.05 + 0.01);
-        resolve({
-          price: price,
-          pe: Math.random() * 20 + 5,
-          pbv: Math.random() * 3 + 0.5,
-          de: Math.random() * 2,
-          roe: Math.random() * 15 + 2,
-          eps: price / (Math.random() * 15 + 8),
-          dividendBaht: div,
-          yieldPercent: (div / price) * 100,
-        });
-      }
-    }, MOCK_DELAY_MS);
-  });
+      Return valid JSON only. Use 0 if a specific value is unavailable after searching.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            price: { type: Type.NUMBER },
+            pe: { type: Type.NUMBER },
+            pbv: { type: Type.NUMBER },
+            de: { type: Type.NUMBER },
+            roe: { type: Type.NUMBER },
+            eps: { type: Type.NUMBER },
+            dividend: { type: Type.NUMBER },
+          },
+          required: ['price', 'pe', 'pbv', 'de', 'roe', 'eps', 'dividend'],
+        },
+      },
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("No data returned from AI service");
+    
+    const data = JSON.parse(text);
+    
+    // Extract sources from grounding metadata to display to the user
+    // The type definition for groundingChunks might vary, we map safely
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+      ?.map((chunk: any) => {
+          if (chunk.web) {
+              return { title: chunk.web.title, uri: chunk.web.uri };
+          }
+          return null;
+      })
+      .filter((s: any) => s !== null) || [];
+
+    return {
+      price: data.price,
+      pe: data.pe,
+      pbv: data.pbv,
+      de: data.de,
+      roe: data.roe,
+      eps: data.eps,
+      dividendBaht: data.dividend,
+      yieldPercent: data.price > 0 ? (data.dividend / data.price) * 100 : 0,
+      sources: sources
+    };
+  } catch (error) {
+    console.error("Failed to fetch stock data:", error);
+    throw error;
+  }
 };
