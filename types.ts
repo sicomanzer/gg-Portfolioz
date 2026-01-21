@@ -14,6 +14,7 @@ export interface Stock {
   loading: boolean;
   error?: string;
   sources?: { title: string; uri: string }[];
+  referenceYear?: string;
 }
 
 export interface PortfolioSettings {

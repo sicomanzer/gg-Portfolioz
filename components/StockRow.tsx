@@ -23,24 +23,18 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
   // Two-way binding logic handlers
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value) || 0;
-    // Price changes -> Keep Dividend constant, update Yield
-    // Yield = (Div / Price) * 100
     const newYield = val > 0 ? (stock.dividendBaht / val) * 100 : 0;
     onUpdate(stock.id, { price: val, yieldPercent: newYield });
   };
 
   const handleDividendChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value) || 0;
-    // Dividend changes -> Update Yield
-    // Yield = (Div / Price) * 100
     const newYield = stock.price > 0 ? (val / stock.price) * 100 : 0;
     onUpdate(stock.id, { dividendBaht: val, yieldPercent: newYield });
   };
 
   const handleYieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value) || 0;
-    // Yield changes -> Update Dividend
-    // Dividend = Price * (Yield / 100)
     const newDividend = stock.price * (val / 100);
     onUpdate(stock.id, { yieldPercent: val, dividendBaht: newDividend });
   };
@@ -57,7 +51,7 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
       {/* Symbol */}
-      <td className="p-2 border-r border-slate-100 relative">
+      <td className="p-2 border-r border-slate-100 relative min-w-[120px]">
         <div className="relative">
             <input
             type="text"
@@ -67,6 +61,14 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
             className={`w-full font-bold text-center uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 ${stock.loading ? 'text-slate-400' : 'text-slate-800'}`}
             placeholder="SYMBOL"
             />
+            
+            {/* Year Badge */}
+            {!stock.loading && stock.referenceYear && (
+              <div className="text-[10px] font-bold text-slate-400 text-center mt-0.5">
+                FY {stock.referenceYear}
+              </div>
+            )}
+
             {stock.loading && (
                 <span className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] bg-blue-100 text-blue-600 px-1 rounded">Wait</span>
             )}
