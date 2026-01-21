@@ -4,13 +4,14 @@ import { DEFAULT_GROWTH, DEFAULT_REQ_RETURN, INITIAL_PORTFOLIO_SETTINGS } from '
 import PortfolioSummary from './components/PortfolioSummary';
 import StockTable from './components/StockTable';
 import { fetchStockData } from './services/stockService';
-import { SaveIcon } from './components/Icons';
+import { SaveIcon, RefreshIcon } from './components/Icons';
 
 function App() {
   const [settings, setSettings] = useState<PortfolioSettings>(INITIAL_PORTFOLIO_SETTINGS);
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [isSaved, setIsSaved] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRefreshingAll, setIsRefreshingAll] = useState(false);
 
   // Load from local storage on mount
   useEffect(() => {
@@ -97,6 +98,20 @@ function App() {
     }
   };
 
+  const handleRefreshAll = async () => {
+    const stocksWithSymbols = stocks.filter(s => s.symbol.trim() !== '');
+    if (stocksWithSymbols.length === 0) return;
+
+    setIsRefreshingAll(true);
+    
+    // Run all refreshes in parallel
+    await Promise.all(
+      stocksWithSymbols.map(s => handleRefreshStock(s.id, s.symbol))
+    );
+    
+    setIsRefreshingAll(false);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
       <div className="max-w-[1400px] mx-auto space-y-6">
@@ -108,12 +123,22 @@ function App() {
             <p className="text-slate-500 mt-1">Dividend Discount Model (DDM) & Margin of Safety Calculator</p>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
              {!isSaved && (
                 <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full font-medium animate-pulse">
                     Unsaved Changes
                 </span>
              )}
+            
+            <button 
+                onClick={handleRefreshAll}
+                disabled={isRefreshingAll || stocks.filter(s => s.symbol).length === 0}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-lg shadow-sm font-semibold hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <RefreshIcon className={`w-4 h-4 ${isRefreshingAll ? 'animate-spin' : ''}`} />
+                {isRefreshingAll ? 'Refreshing All...' : 'Refresh All Data'}
+            </button>
+
             <button 
                 onClick={handleSave}
                 disabled={isSaving}
@@ -154,7 +179,7 @@ function App() {
             
             {/* Disclaimer for Demo */}
             <div className="mt-4 text-xs text-slate-400 text-right">
-                * Data fetching is simulated for this demo due to browser CORS restrictions. In a real deployment, this would connect to a Next.js API route.
+                * Data is retrieved using Google Search grounding for real-time accuracy.
             </div>
         </div>
 
