@@ -1,0 +1,5 @@
+{
+  "name": "Dividend Stock Portfolio Valuation",
+  "description": "A professional finance tool to plan stock portfolios and calculate Fair Price using the Dividend Discount Model (DDM) with automatic MOS calculation.",
+  "requestFramePermissions": []
+}
