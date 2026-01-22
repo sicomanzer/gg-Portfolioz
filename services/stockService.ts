@@ -1,10 +1,12 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Stock } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> => {
   try {
+    // Create instance inside function to avoid top-level 'process is not defined' error
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
     const currentYear = new Date().getFullYear();
     const targetFiscalYear = currentYear - 1;
 
