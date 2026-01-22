@@ -3,10 +3,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Stock } from '../types';
 
 export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> => {
+  // สร้าง Instance ใหม่ทุกครั้งเพื่อให้ใช้ Key ล่าสุดที่อาจถูกเลือกใหม่
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
   try {
-    // ใช้ process.env.API_KEY โดยตรงตามมาตรฐาน
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
     const targetFiscalYear = new Date().getFullYear() - 1;
 
     const response = await ai.models.generateContent({
@@ -72,7 +72,10 @@ export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> =>
     };
   } catch (error: any) {
     console.error("Stock Fetch Error:", error);
-    // ส่งผ่านข้อความ Error เพื่อนำไปแสดงใน UI
+    // ตรวจสอบ Error พิเศษหาก API Key มีปัญหา
+    if (error.message?.includes("API key not found") || error.message?.includes("invalid")) {
+        throw new Error("API Key Error: Please re-select your key.");
+    }
     throw new Error(error.message || "Failed to fetch data");
   }
 };
