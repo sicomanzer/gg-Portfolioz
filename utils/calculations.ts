@@ -59,6 +59,16 @@ export const calculateDDM = (
   const mos40 = fairPrice * 0.6;
   const mos50 = fairPrice * 0.5;
 
+  /**
+   * Calculates max shares rounded down to the nearest 100 (Board Lot).
+   * Example: 10,787 shares -> 10,700 shares
+   */
+  const calculateBoardLotShares = (budget: number, pricePerShare: number) => {
+    if (pricePerShare <= 0) return 0;
+    const exactShares = budget / pricePerShare;
+    return Math.floor(exactShares / 100) * 100;
+  };
+
   return {
     d1,
     yieldForecast,
@@ -66,9 +76,9 @@ export const calculateDDM = (
     mos30,
     mos40,
     mos50,
-    maxShares30: mos30 > 0 ? Math.floor(moneyPerCompany / mos30) : 0,
-    maxShares40: mos40 > 0 ? Math.floor(moneyPerCompany / mos40) : 0,
-    maxShares50: mos50 > 0 ? Math.floor(moneyPerCompany / mos50) : 0,
+    maxShares30: calculateBoardLotShares(moneyPerCompany, mos30),
+    maxShares40: calculateBoardLotShares(moneyPerCompany, mos40),
+    maxShares50: calculateBoardLotShares(moneyPerCompany, mos50),
     isValid: true
   };
 };

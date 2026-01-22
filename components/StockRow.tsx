@@ -143,14 +143,20 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
       {/* DDM Inputs */}
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
         <input type="number" step="0.01" value={formatForInput(stock.dividendBaht)} disabled={stock.loading} onChange={handleDividendChange} className={inputClass} placeholder="0.00" />
-        <div className="text-[9px] text-center text-blue-400 font-bold mt-1 min-h-[12px]">
-          {!stock.loading && result.d1 > 0 && `D1: ฿${formatNumber(result.d1)}`}
+      </td>
+      {/* Forecasted Dividend (D1) Cell - MOVED HERE */}
+      <td className="p-2 bg-blue-50/30 border-r border-slate-100">
+        <div className={`text-center font-bold text-sm transition-colors ${stock.loading ? 'text-slate-300' : 'text-blue-800'}`}>
+          {stock.loading ? '-' : (result.d1 > 0 ? `฿${formatNumber(result.d1)}` : '฿0.00')}
         </div>
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
         <input type="number" step="0.01" value={formatForInput(stock.yieldPercent)} disabled={stock.loading} onChange={handleYieldChange} className={inputClass} placeholder="0.00" />
-        <div className="text-[9px] text-center text-blue-400 font-bold mt-1 min-h-[12px]">
-          {!stock.loading && result.yieldForecast > 0 && `Y1: ${formatNumber(result.yieldForecast)}%`}
+      </td>
+      {/* Forecasted Yield (Y1) Cell */}
+      <td className="p-2 bg-blue-50/30 border-r border-slate-100">
+        <div className={`text-center font-bold text-sm transition-colors ${stock.loading ? 'text-slate-300' : 'text-blue-600'}`}>
+          {stock.loading ? '-' : (result.yieldForecast > 0 ? `${formatNumber(result.yieldForecast)}%` : '0.00%')}
         </div>
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
@@ -177,8 +183,8 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
         <div className={`text-sm font-semibold transition-colors ${stock.loading ? 'text-slate-300' : 'text-slate-700'}`}>
           {stock.loading ? '-' : (result.isValid ? formatNumber(result.mos30) : '-')}
         </div>
-        <div className="text-xs text-slate-400 mt-1">
-          {stock.loading ? '-' : (result.isValid ? result.maxShares30.toLocaleString() : '0')} shares
+        <div className="text-[10px] text-slate-400 mt-1">
+          {stock.loading ? '-' : (result.isValid ? result.maxShares30.toLocaleString() : '0')} หุ้น
         </div>
       </td>
 
@@ -186,8 +192,8 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
         <div className={`text-sm font-semibold transition-colors ${stock.loading ? 'text-slate-300' : 'text-slate-700'}`}>
           {stock.loading ? '-' : (result.isValid ? formatNumber(result.mos40) : '-')}
         </div>
-        <div className="text-xs text-slate-400 mt-1">
-          {stock.loading ? '-' : (result.isValid ? result.maxShares40.toLocaleString() : '0')} shares
+        <div className="text-[10px] text-slate-400 mt-1">
+          {stock.loading ? '-' : (result.isValid ? result.maxShares40.toLocaleString() : '0')} หุ้น
         </div>
       </td>
 
@@ -195,13 +201,13 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
         <div className={`text-sm font-semibold transition-colors ${stock.loading ? 'text-slate-300' : 'text-slate-700'}`}>
           {stock.loading ? '-' : (result.isValid ? formatNumber(result.mos50) : '-')}
         </div>
-        <div className="text-xs text-slate-400 mt-1">
-          {stock.loading ? '-' : (result.isValid ? result.maxShares50.toLocaleString() : '0')} shares
+        <div className="text-[10px] text-slate-400 mt-1">
+          {stock.loading ? '-' : (result.isValid ? result.maxShares50.toLocaleString() : '0')} หุ้น
         </div>
       </td>
 
       <td className="p-2 text-center">
-        <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center justify-center gap-2 transition-opacity">
             <button 
                 onClick={() => onRefresh(stock.id, stock.symbol)} 
                 disabled={stock.loading}

@@ -28,7 +28,7 @@ const StockTable: React.FC<Props> = ({
   return (
     <div className="bg-white rounded-lg shadow border border-slate-200 overflow-hidden flex flex-col h-full">
       <div className="overflow-x-auto custom-scrollbar pb-4">
-        <table className="w-full text-left border-collapse min-w-[1200px]">
+        <table className="w-full text-left border-collapse min-w-[1400px]">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-slate-500 bg-slate-100 border-b border-slate-200">
               <th className="p-3 text-center font-bold w-24 sticky left-0 bg-slate-100 z-10 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Symbol</th>
@@ -41,8 +41,14 @@ const StockTable: React.FC<Props> = ({
               <th className="p-3 text-center w-24 border-r border-slate-200 bg-blue-50/50 text-blue-800">
                 Div (฿) <br/><span className="text-[9px] opacity-60">(D0)</span>
               </th>
+              <th className="p-3 text-center w-24 border-r border-slate-200 bg-blue-50/50 text-blue-800">
+                Forecast (฿) <br/><span className="text-[9px] opacity-60">(D1)</span>
+              </th>
               <th className="p-3 text-center w-20 border-r border-slate-200 bg-blue-50/50 text-blue-800">
                 Yield % <br/><span className="text-[9px] opacity-60">(Y0)</span>
+              </th>
+              <th className="p-3 text-center w-20 border-r border-slate-200 bg-blue-50/50 text-blue-800">
+                Forecast % <br/><span className="text-[9px] opacity-60">(Y1)</span>
               </th>
               <th className="p-3 text-center w-20 border-r border-slate-200 bg-blue-50/50 text-blue-800">
                 Growth % <br/><span className="text-[9px] opacity-60">(g)</span>
@@ -60,7 +66,7 @@ const StockTable: React.FC<Props> = ({
           <tbody className="bg-white">
             {stocks.length === 0 ? (
                 <tr>
-                    <td colSpan={16} className="p-12 text-center text-slate-400">
+                    <td colSpan={18} className="p-12 text-center text-slate-400">
                         No stocks added yet. Click "Add Stock" to begin.
                     </td>
                 </tr>
