@@ -1,21 +1,23 @@
+
 import { Stock, CalculationResult } from '../types';
 
 export const calculateDDM = (
   stock: Stock, 
   moneyPerCompany: number
 ): CalculationResult => {
-  const { dividendBaht, growth, requiredReturn, price } = stock;
+  const { dividendBaht, growth, requiredReturn } = stock;
   
   // Gordon Growth Model: P = D1 / (r - g)
   // D1 = D0 * (1 + g)
   
   // Convert percentages to decimals
-  const g = growth / 100;
-  const r = requiredReturn / 100;
+  const g = (growth || 0) / 100;
+  const r = (requiredReturn || 0) / 100;
 
   // Basic check for missing inputs
   if (!dividendBaht || dividendBaht <= 0) {
     return {
+      d1: 0,
       ddmPrice: 0,
       mos30: 0,
       mos40: 0,
@@ -28,10 +30,13 @@ export const calculateDDM = (
     };
   }
 
+  const d1 = dividendBaht * (1 + g);
+
   // Model Validity Check: If growth is greater than or equal to required return, 
   // the denominator is zero or negative, making the formula invalid for a steady-state model.
   if (r <= g) {
     return {
+      d1,
       ddmPrice: 0,
       mos30: 0,
       mos40: 0,
@@ -45,7 +50,6 @@ export const calculateDDM = (
   }
 
   // Calculation
-  const d1 = dividendBaht * (1 + g);
   const fairPrice = d1 / (r - g);
   
   const mos30 = fairPrice * 0.7;
@@ -53,6 +57,7 @@ export const calculateDDM = (
   const mos50 = fairPrice * 0.5;
 
   return {
+    d1,
     ddmPrice: fairPrice,
     mos30,
     mos40,

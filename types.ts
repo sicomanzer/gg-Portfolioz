@@ -1,3 +1,4 @@
+
 export interface Stock {
   id: string;
   symbol: string;
@@ -23,6 +24,7 @@ export interface PortfolioSettings {
 }
 
 export interface CalculationResult {
+  d1: number;
   ddmPrice: number;
   mos30: number;
   mos40: number;

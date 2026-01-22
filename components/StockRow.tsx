@@ -1,7 +1,8 @@
+
 import React, { useMemo } from 'react';
 import { Stock } from '../types';
-import { calculateDDM, formatCurrency, formatNumber } from '../utils/calculations';
-import { TrashIcon, RefreshIcon, AlertCircleIcon, InfoIcon } from './Icons';
+import { calculateDDM, formatNumber } from '../utils/calculations';
+import { TrashIcon, RefreshIcon, InfoIcon } from './Icons';
 
 interface Props {
   stock: Stock;
@@ -39,22 +40,41 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
     onUpdate(stock.id, { yieldPercent: val, dividendBaht: newDividend });
   };
 
+  const handleGrowthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+    handleChange('growth', isNaN(val) ? 0 : val);
+  };
+
+  const handleReturnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+    handleChange('requiredReturn', isNaN(val) ? 0 : val);
+  };
+
   const handleSymbolKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       onRefresh(stock.id, stock.symbol);
     }
   };
 
+  // Helper to format values specifically for input fields (to avoid long decimals like in the screenshot)
+  const formatForInput = (val: number | undefined) => {
+    if (val === undefined || val === 0) return '';
+    // If it has decimals, limit to 2, otherwise show as is
+    return Number(val.toFixed(2)).toString();
+  };
+
+  // Shared classes for consistent UI
   const inputClass = `w-full bg-transparent text-center focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-1 text-sm font-medium transition-all ${
-    stock.loading ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700'
+    stock.loading ? 'text-slate-400 cursor-not-allowed opacity-60' : 'text-slate-700'
   }`;
+  
   const readOnlyClass = `w-full text-center text-sm py-1 transition-colors ${
     stock.loading ? 'text-slate-300' : 'text-slate-500'
   }`;
   
   return (
-    <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
-      {/* Symbol */}
+    <tr className={`border-b border-slate-100 transition-colors group ${stock.loading ? 'bg-slate-50/30' : 'hover:bg-slate-50'}`}>
+      {/* Symbol Column */}
       <td className="p-2 border-r border-slate-100 relative min-w-[120px]">
         <div className="relative">
             <input
@@ -64,12 +84,11 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
             onChange={(e) => handleChange('symbol', e.target.value.toUpperCase())}
             onKeyDown={handleSymbolKeyDown}
             className={`w-full font-bold text-center uppercase focus:outline-none focus:ring-2 rounded px-2 py-1 transition-colors ${
-              stock.loading ? 'text-slate-300 cursor-not-allowed bg-slate-50/50' : 'text-slate-800'
+              stock.loading ? 'text-slate-300 cursor-not-allowed' : 'text-slate-800'
             } ${stock.error ? 'ring-2 ring-red-400 focus:ring-red-500' : 'focus:ring-blue-500'}`}
             placeholder="SYMBOL"
             />
             
-            {/* Year Badge or Error Message */}
             <div className="text-[10px] font-bold text-center mt-0.5 min-h-[14px]">
               {!stock.loading && stock.error ? (
                 <span className="text-red-500">{stock.error}</span>
@@ -81,10 +100,11 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
             </div>
 
             {stock.loading && (
-                <span className="absolute right-1 top-1.5 text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-bold shadow-sm animate-bounce">Wait</span>
+                <span className="absolute right-1 top-1.5 text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-bold shadow-sm animate-bounce z-10">
+                  Wait
+                </span>
             )}
             
-            {/* Sources Tooltip */}
             {!stock.loading && stock.sources && stock.sources.length > 0 && (
               <div className="absolute top-1 right-1 group/source">
                 <div className="cursor-help text-blue-300 hover:text-blue-500 p-1">
@@ -112,9 +132,8 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
         </div>
       </td>
 
-      {/* Market Data */}
       <td className="p-2 border-r border-slate-100">
-        <input type="number" step="0.01" value={stock.price || ''} disabled={stock.loading} onChange={handlePriceChange} className={inputClass} placeholder="0.00" />
+        <input type="number" step="0.01" value={formatForInput(stock.price)} disabled={stock.loading} onChange={handlePriceChange} className={inputClass} placeholder="0.00" />
       </td>
       <td className="p-2 border-r border-slate-100"><div className={readOnlyClass}>{formatNumber(stock.pe)}</div></td>
       <td className="p-2 border-r border-slate-100"><div className={readOnlyClass}>{formatNumber(stock.pbv)}</div></td>
@@ -124,16 +143,19 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
 
       {/* DDM Inputs */}
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
-        <input type="number" step="0.01" value={stock.dividendBaht ? formatNumber(stock.dividendBaht) : ''} disabled={stock.loading} onChange={handleDividendChange} className={inputClass} placeholder="0.00" />
+        <input type="number" step="0.01" value={formatForInput(stock.dividendBaht)} disabled={stock.loading} onChange={handleDividendChange} className={inputClass} placeholder="0.00" />
+        <div className="text-[9px] text-center text-blue-400 font-bold mt-1 min-h-[12px]">
+          {!stock.loading && result.d1 > 0 && `D1: ฿${formatNumber(result.d1)}`}
+        </div>
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
-        <input type="number" step="0.01" value={stock.yieldPercent ? formatNumber(stock.yieldPercent) : ''} disabled={stock.loading} onChange={handleYieldChange} className={inputClass} placeholder="0.00" />
+        <input type="number" step="0.01" value={formatForInput(stock.yieldPercent)} disabled={stock.loading} onChange={handleYieldChange} className={inputClass} placeholder="0.00" />
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
-        <input type="number" step="0.1" value={stock.growth} disabled={stock.loading} onChange={(e) => handleChange('growth', parseFloat(e.target.value))} className={inputClass} />
+        <input type="number" step="0.1" value={stock.growth === 0 ? '' : stock.growth} disabled={stock.loading} onChange={handleGrowthChange} className={inputClass} placeholder="0.0" />
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
-        <input type="number" step="0.1" value={stock.requiredReturn} disabled={stock.loading} onChange={(e) => handleChange('requiredReturn', parseFloat(e.target.value))} className={inputClass} />
+        <input type="number" step="0.1" value={stock.requiredReturn === 0 ? '' : stock.requiredReturn} disabled={stock.loading} onChange={handleReturnChange} className={inputClass} placeholder="0.0" />
       </td>
 
       {/* Results */}
@@ -149,7 +171,6 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
         )}
       </td>
       
-      {/* MOS 30% */}
       <td className="p-2 text-center border-r border-slate-100 bg-green-50/30">
         <div className={`text-sm font-semibold transition-colors ${stock.loading ? 'text-slate-300' : 'text-slate-700'}`}>
           {stock.loading ? '-' : (result.isValid ? formatNumber(result.mos30) : '-')}
@@ -159,7 +180,6 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
         </div>
       </td>
 
-      {/* MOS 40% */}
       <td className="p-2 text-center border-r border-slate-100 bg-green-100/30">
         <div className={`text-sm font-semibold transition-colors ${stock.loading ? 'text-slate-300' : 'text-slate-700'}`}>
           {stock.loading ? '-' : (result.isValid ? formatNumber(result.mos40) : '-')}
@@ -169,7 +189,6 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
         </div>
       </td>
 
-      {/* MOS 50% */}
       <td className="p-2 text-center border-r border-slate-100 bg-green-200/30">
         <div className={`text-sm font-semibold transition-colors ${stock.loading ? 'text-slate-300' : 'text-slate-700'}`}>
           {stock.loading ? '-' : (result.isValid ? formatNumber(result.mos50) : '-')}
@@ -179,13 +198,12 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
         </div>
       </td>
 
-      {/* Actions */}
       <td className="p-2 text-center">
         <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
             <button 
                 onClick={() => onRefresh(stock.id, stock.symbol)} 
                 disabled={stock.loading}
-                className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Refresh Data"
             >
                 <RefreshIcon className={`w-4 h-4 ${stock.loading ? 'animate-spin' : ''}`} />
@@ -193,7 +211,7 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
             <button 
                 onClick={() => onDelete(stock.id)}
                 disabled={stock.loading}
-                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Delete Row"
             >
                 <TrashIcon className="w-4 h-4" />
