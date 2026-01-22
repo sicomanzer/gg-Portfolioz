@@ -41,7 +41,9 @@ const StockTable: React.FC<Props> = ({
               <th className="p-3 text-center w-24 border-r border-slate-200 bg-blue-50/50 text-blue-800">
                 Div (฿) <br/><span className="text-[9px] opacity-60">(D0)</span>
               </th>
-              <th className="p-3 text-center w-20 border-r border-slate-200 bg-blue-50/50 text-blue-800">Yield %</th>
+              <th className="p-3 text-center w-20 border-r border-slate-200 bg-blue-50/50 text-blue-800">
+                Yield % <br/><span className="text-[9px] opacity-60">(Y0)</span>
+              </th>
               <th className="p-3 text-center w-20 border-r border-slate-200 bg-blue-50/50 text-blue-800">
                 Growth % <br/><span className="text-[9px] opacity-60">(g)</span>
               </th>

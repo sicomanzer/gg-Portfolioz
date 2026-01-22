@@ -25,6 +25,7 @@ export interface PortfolioSettings {
 
 export interface CalculationResult {
   d1: number;
+  yieldForecast: number;
   ddmPrice: number;
   mos30: number;
   mos40: number;

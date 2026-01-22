@@ -56,10 +56,9 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
     }
   };
 
-  // Helper to format values specifically for input fields (to avoid long decimals like in the screenshot)
+  // Helper to format values specifically for input fields (to avoid long decimals)
   const formatForInput = (val: number | undefined) => {
     if (val === undefined || val === 0) return '';
-    // If it has decimals, limit to 2, otherwise show as is
     return Number(val.toFixed(2)).toString();
   };
 
@@ -150,6 +149,9 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
         <input type="number" step="0.01" value={formatForInput(stock.yieldPercent)} disabled={stock.loading} onChange={handleYieldChange} className={inputClass} placeholder="0.00" />
+        <div className="text-[9px] text-center text-blue-400 font-bold mt-1 min-h-[12px]">
+          {!stock.loading && result.yieldForecast > 0 && `Y1: ${formatNumber(result.yieldForecast)}%`}
+        </div>
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
         <input type="number" step="0.1" value={stock.growth === 0 ? '' : stock.growth} disabled={stock.loading} onChange={handleGrowthChange} className={inputClass} placeholder="0.0" />

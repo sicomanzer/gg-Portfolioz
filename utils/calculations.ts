@@ -5,7 +5,7 @@ export const calculateDDM = (
   stock: Stock, 
   moneyPerCompany: number
 ): CalculationResult => {
-  const { dividendBaht, growth, requiredReturn } = stock;
+  const { price, dividendBaht, growth, requiredReturn } = stock;
   
   // Gordon Growth Model: P = D1 / (r - g)
   // D1 = D0 * (1 + g)
@@ -18,6 +18,7 @@ export const calculateDDM = (
   if (!dividendBaht || dividendBaht <= 0) {
     return {
       d1: 0,
+      yieldForecast: 0,
       ddmPrice: 0,
       mos30: 0,
       mos40: 0,
@@ -31,12 +32,14 @@ export const calculateDDM = (
   }
 
   const d1 = dividendBaht * (1 + g);
+  const yieldForecast = price > 0 ? (d1 / price) * 100 : 0;
 
   // Model Validity Check: If growth is greater than or equal to required return, 
   // the denominator is zero or negative, making the formula invalid for a steady-state model.
   if (r <= g) {
     return {
       d1,
+      yieldForecast,
       ddmPrice: 0,
       mos30: 0,
       mos40: 0,
@@ -58,6 +61,7 @@ export const calculateDDM = (
 
   return {
     d1,
+    yieldForecast,
     ddmPrice: fairPrice,
     mos30,
     mos40,
