@@ -31,4 +31,5 @@ export interface CalculationResult {
   maxShares40: number;
   maxShares50: number;
   isValid: boolean;
+  errorReason?: string;
 }

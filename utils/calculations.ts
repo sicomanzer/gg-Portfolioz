@@ -4,17 +4,17 @@ export const calculateDDM = (
   stock: Stock, 
   moneyPerCompany: number
 ): CalculationResult => {
-  const { dividendBaht, growth, requiredReturn } = stock;
+  const { dividendBaht, growth, requiredReturn, price } = stock;
   
-  // DDM Formula: P = D1 / (r - g)
+  // Gordon Growth Model: P = D1 / (r - g)
   // D1 = D0 * (1 + g)
   
   // Convert percentages to decimals
   const g = growth / 100;
   const r = requiredReturn / 100;
 
-  // Model Validity Check: If g >= r, the model breaks (denominator is 0 or negative)
-  if (g >= r) {
+  // Basic check for missing inputs
+  if (!dividendBaht || dividendBaht <= 0) {
     return {
       ddmPrice: 0,
       mos30: 0,
@@ -23,13 +23,31 @@ export const calculateDDM = (
       maxShares30: 0,
       maxShares40: 0,
       maxShares50: 0,
-      isValid: false
+      isValid: false,
+      errorReason: 'No Div'
     };
   }
 
-  const nextDividend = dividendBaht * (1 + g);
-  const fairPrice = nextDividend / (r - g);
+  // Model Validity Check: If growth is greater than or equal to required return, 
+  // the denominator is zero or negative, making the formula invalid for a steady-state model.
+  if (r <= g) {
+    return {
+      ddmPrice: 0,
+      mos30: 0,
+      mos40: 0,
+      mos50: 0,
+      maxShares30: 0,
+      maxShares40: 0,
+      maxShares50: 0,
+      isValid: false,
+      errorReason: 'r ≤ g'
+    };
+  }
 
+  // Calculation
+  const d1 = dividendBaht * (1 + g);
+  const fairPrice = d1 / (r - g);
+  
   const mos30 = fairPrice * 0.7;
   const mos40 = fairPrice * 0.6;
   const mos50 = fairPrice * 0.5;
@@ -46,14 +64,17 @@ export const calculateDDM = (
   };
 };
 
-export const formatCurrency = (val: number, minimumFractionDigits = 2) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'decimal',
-    minimumFractionDigits,
+export const formatCurrency = (val: number): string => {
+  return new Intl.NumberFormat('th-TH', {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(val);
 };
 
-export const formatNumber = (val: number, digits = 2) => {
-  return val.toFixed(digits);
+export const formatNumber = (val: number | undefined): string => {
+  if (val === undefined || isNaN(val)) return '0.00';
+  return val.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };

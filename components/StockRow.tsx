@@ -17,7 +17,7 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
 
   // Handlers for inputs
   const handleChange = (field: keyof Stock, value: string | number) => {
-    onUpdate(stock.id, { [field]: value });
+    onUpdate(stock.id, { [field]: value, error: undefined }); // Clear error on change
   };
 
   // Two-way binding logic handlers
@@ -45,8 +45,12 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
     }
   };
 
-  const inputClass = "w-full bg-transparent text-center focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-1 text-sm font-medium text-slate-700";
-  const readOnlyClass = "w-full text-center text-sm text-slate-500 py-1";
+  const inputClass = `w-full bg-transparent text-center focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-1 text-sm font-medium transition-all ${
+    stock.loading ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700'
+  }`;
+  const readOnlyClass = `w-full text-center text-sm py-1 transition-colors ${
+    stock.loading ? 'text-slate-300' : 'text-slate-500'
+  }`;
   
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
@@ -56,21 +60,28 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
             <input
             type="text"
             value={stock.symbol}
+            disabled={stock.loading}
             onChange={(e) => handleChange('symbol', e.target.value.toUpperCase())}
             onKeyDown={handleSymbolKeyDown}
-            className={`w-full font-bold text-center uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 ${stock.loading ? 'text-slate-400' : 'text-slate-800'}`}
+            className={`w-full font-bold text-center uppercase focus:outline-none focus:ring-2 rounded px-2 py-1 transition-colors ${
+              stock.loading ? 'text-slate-300 cursor-not-allowed bg-slate-50/50' : 'text-slate-800'
+            } ${stock.error ? 'ring-2 ring-red-400 focus:ring-red-500' : 'focus:ring-blue-500'}`}
             placeholder="SYMBOL"
             />
             
-            {/* Year Badge */}
-            {!stock.loading && stock.referenceYear && (
-              <div className="text-[10px] font-bold text-slate-400 text-center mt-0.5">
-                FY {stock.referenceYear}
-              </div>
-            )}
+            {/* Year Badge or Error Message */}
+            <div className="text-[10px] font-bold text-center mt-0.5 min-h-[14px]">
+              {!stock.loading && stock.error ? (
+                <span className="text-red-500">{stock.error}</span>
+              ) : !stock.loading && stock.referenceYear ? (
+                <span className="text-slate-400">FY {stock.referenceYear}</span>
+              ) : stock.loading ? (
+                <span className="text-blue-400 animate-pulse uppercase tracking-widest text-[9px]">Fetching...</span>
+              ) : null}
+            </div>
 
             {stock.loading && (
-                <span className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] bg-blue-100 text-blue-600 px-1 rounded">Wait</span>
+                <span className="absolute right-1 top-1.5 text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-bold shadow-sm animate-bounce">Wait</span>
             )}
             
             {/* Sources Tooltip */}
@@ -103,7 +114,7 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
 
       {/* Market Data */}
       <td className="p-2 border-r border-slate-100">
-        <input type="number" step="0.01" value={stock.price || ''} onChange={handlePriceChange} className={inputClass} placeholder="0.00" />
+        <input type="number" step="0.01" value={stock.price || ''} disabled={stock.loading} onChange={handlePriceChange} className={inputClass} placeholder="0.00" />
       </td>
       <td className="p-2 border-r border-slate-100"><div className={readOnlyClass}>{formatNumber(stock.pe)}</div></td>
       <td className="p-2 border-r border-slate-100"><div className={readOnlyClass}>{formatNumber(stock.pbv)}</div></td>
@@ -113,39 +124,59 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
 
       {/* DDM Inputs */}
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
-        <input type="number" step="0.01" value={stock.dividendBaht ? formatNumber(stock.dividendBaht) : ''} onChange={handleDividendChange} className={inputClass} placeholder="0.00" />
+        <input type="number" step="0.01" value={stock.dividendBaht ? formatNumber(stock.dividendBaht) : ''} disabled={stock.loading} onChange={handleDividendChange} className={inputClass} placeholder="0.00" />
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
-        <input type="number" step="0.01" value={stock.yieldPercent ? formatNumber(stock.yieldPercent) : ''} onChange={handleYieldChange} className={inputClass} placeholder="0.00" />
+        <input type="number" step="0.01" value={stock.yieldPercent ? formatNumber(stock.yieldPercent) : ''} disabled={stock.loading} onChange={handleYieldChange} className={inputClass} placeholder="0.00" />
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
-        <input type="number" step="0.1" value={stock.growth} onChange={(e) => handleChange('growth', parseFloat(e.target.value))} className={inputClass} />
+        <input type="number" step="0.1" value={stock.growth} disabled={stock.loading} onChange={(e) => handleChange('growth', parseFloat(e.target.value))} className={inputClass} />
       </td>
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
-        <input type="number" step="0.1" value={stock.requiredReturn} onChange={(e) => handleChange('requiredReturn', parseFloat(e.target.value))} className={inputClass} />
+        <input type="number" step="0.1" value={stock.requiredReturn} disabled={stock.loading} onChange={(e) => handleChange('requiredReturn', parseFloat(e.target.value))} className={inputClass} />
       </td>
 
       {/* Results */}
-      <td className={`p-2 font-bold text-center border-r border-slate-100 ${result.isValid ? 'text-green-700 bg-green-50/50' : 'text-red-500 bg-red-50'}`}>
-        {result.isValid ? formatNumber(result.ddmPrice) : <span title="Growth ≥ Req. Return">Error</span>}
+      <td className={`p-2 font-bold text-center border-r border-slate-100 transition-colors ${
+        stock.loading ? 'bg-slate-50 text-slate-300' : result.isValid ? 'text-green-700 bg-green-50/50' : 'text-red-500 bg-red-50'
+      }`}>
+        {stock.loading ? '...' : result.isValid ? (
+          formatNumber(result.ddmPrice)
+        ) : (
+          <span className="text-[10px] uppercase tracking-tighter" title={result.errorReason}>
+            {result.errorReason || 'Invalid'}
+          </span>
+        )}
       </td>
       
       {/* MOS 30% */}
       <td className="p-2 text-center border-r border-slate-100 bg-green-50/30">
-        <div className="text-sm font-semibold text-slate-700">{result.isValid ? formatNumber(result.mos30) : '-'}</div>
-        <div className="text-xs text-slate-400 mt-1">{result.maxShares30.toLocaleString()} shares</div>
+        <div className={`text-sm font-semibold transition-colors ${stock.loading ? 'text-slate-300' : 'text-slate-700'}`}>
+          {stock.loading ? '-' : (result.isValid ? formatNumber(result.mos30) : '-')}
+        </div>
+        <div className="text-xs text-slate-400 mt-1">
+          {stock.loading ? '-' : (result.isValid ? result.maxShares30.toLocaleString() : '0')} shares
+        </div>
       </td>
 
       {/* MOS 40% */}
       <td className="p-2 text-center border-r border-slate-100 bg-green-100/30">
-        <div className="text-sm font-semibold text-slate-700">{result.isValid ? formatNumber(result.mos40) : '-'}</div>
-        <div className="text-xs text-slate-400 mt-1">{result.maxShares40.toLocaleString()} shares</div>
+        <div className={`text-sm font-semibold transition-colors ${stock.loading ? 'text-slate-300' : 'text-slate-700'}`}>
+          {stock.loading ? '-' : (result.isValid ? formatNumber(result.mos40) : '-')}
+        </div>
+        <div className="text-xs text-slate-400 mt-1">
+          {stock.loading ? '-' : (result.isValid ? result.maxShares40.toLocaleString() : '0')} shares
+        </div>
       </td>
 
       {/* MOS 50% */}
       <td className="p-2 text-center border-r border-slate-100 bg-green-200/30">
-        <div className="text-sm font-semibold text-slate-700">{result.isValid ? formatNumber(result.mos50) : '-'}</div>
-        <div className="text-xs text-slate-400 mt-1">{result.maxShares50.toLocaleString()} shares</div>
+        <div className={`text-sm font-semibold transition-colors ${stock.loading ? 'text-slate-300' : 'text-slate-700'}`}>
+          {stock.loading ? '-' : (result.isValid ? formatNumber(result.mos50) : '-')}
+        </div>
+        <div className="text-xs text-slate-400 mt-1">
+          {stock.loading ? '-' : (result.isValid ? result.maxShares50.toLocaleString() : '0')} shares
+        </div>
       </td>
 
       {/* Actions */}
@@ -161,7 +192,8 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
             </button>
             <button 
                 onClick={() => onDelete(stock.id)}
-                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                disabled={stock.loading}
+                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
                 title="Delete Row"
             >
                 <TrashIcon className="w-4 h-4" />

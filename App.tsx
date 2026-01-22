@@ -85,28 +85,45 @@ function App() {
   }, [isSaved]);
 
   const handleRefreshStock = async (id: string, symbol: string) => {
-    if (!symbol) return;
+    const trimmedSymbol = symbol.trim().toUpperCase();
     
-    // Set loading state
-    handleUpdateStock(id, { loading: true, error: undefined });
+    // 1. Validation: Not empty
+    if (!trimmedSymbol) {
+      handleUpdateStock(id, { error: 'Symbol required' });
+      return;
+    }
+    
+    // 2. Validation: Alphabetic characters only
+    if (!/^[A-Z]+$/.test(trimmedSymbol)) {
+      handleUpdateStock(id, { error: 'A-Z only' });
+      return;
+    }
+    
+    // Set loading state and clear existing error
+    handleUpdateStock(id, { symbol: trimmedSymbol, loading: true, error: undefined });
 
     try {
-      const data = await fetchStockData(symbol);
+      const data = await fetchStockData(trimmedSymbol);
       handleUpdateStock(id, { ...data, loading: false });
     } catch (error) {
-      handleUpdateStock(id, { loading: false, error: 'Failed to fetch' });
+      handleUpdateStock(id, { loading: false, error: 'Fetch failed' });
     }
   };
 
   const handleRefreshAll = async () => {
-    const stocksWithSymbols = stocks.filter(s => s.symbol.trim() !== '');
-    if (stocksWithSymbols.length === 0) return;
+    // Filter stocks with valid symbols before starting
+    const stocksToRefresh = stocks.filter(s => {
+      const sym = s.symbol.trim().toUpperCase();
+      return sym !== '' && /^[A-Z]+$/.test(sym);
+    });
+
+    if (stocksToRefresh.length === 0) return;
 
     setIsRefreshingAll(true);
     
     // Run all refreshes in parallel
     await Promise.all(
-      stocksWithSymbols.map(s => handleRefreshStock(s.id, s.symbol))
+      stocksToRefresh.map(s => handleRefreshStock(s.id, s.symbol))
     );
     
     setIsRefreshingAll(false);
