@@ -24,8 +24,10 @@
       }
     </style>
     <script>
-      // Shim for process.env to prevent ReferenceError in browser
-      window.process = { env: { API_KEY: '' } };
+      // Safe Shim for process.env
+      // Only define if not already provided by the build tool or environment
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
     </script>
     <script type="importmap">
 {

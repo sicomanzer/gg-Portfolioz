@@ -3,30 +3,34 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Stock } from '../types';
 
 export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> => {
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("Missing API_KEY. Please set it in your environment variables.");
+  }
+
   try {
-    // Create instance inside function to avoid top-level 'process is not defined' error
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
     
     const currentYear = new Date().getFullYear();
     const targetFiscalYear = currentYear - 1;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Find the financial data for stock symbol "${symbol}" for the PREVIOUS COMPLETED FULL FISCAL YEAR (FY${targetFiscalYear}).
+      model: 'gemini-3-pro-preview', // Upgraded for better financial reasoning
+      contents: `Search and extract financial data for stock symbol "${symbol}" specifically for the FULL FISCAL YEAR (FY${targetFiscalYear}).
       
-      IMPORTANT: Do not use real-time or interim (Q1, Q2, Q3) data. We need the audited full-year values from the most recently concluded fiscal year (e.g., if today is in 2025, get data from 2024).
-      
-      Extract:
-      1. Current Market Price (as of today)
-      2. P/E Ratio (based on full-year earnings)
+      Required Data:
+      1. Current Market Price (latest available)
+      2. P/E Ratio (full-year basis)
       3. P/BV Ratio
       4. Debt to Equity Ratio (D/E)
       5. Return on Equity (ROE) %
-      6. Earnings Per Share (EPS) for the full year
-      7. Total Annual Dividend Paid per share (Sum of all dividends paid for that fiscal year)
-      8. The actual Year of this data (e.g., "2024")
+      6. Earnings Per Share (EPS) for the full fiscal year
+      7. Total Annual Dividend per share paid for that year (D0)
+      8. Confirmation of the data year (e.g., "${targetFiscalYear}")
 
-      Return valid JSON only.`,
+      Note: If the company pays dividends multiple times a year, sum them up for the annual dividend.
+      Return as valid JSON.`,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
@@ -73,8 +77,14 @@ export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> =>
       sources: sources,
       referenceYear: data.referenceYear
     };
-  } catch (error) {
-    console.error("Failed to fetch stock data:", error);
-    throw error;
+  } catch (error: any) {
+    console.error("Gemini API Error:", error);
+    // Return a more user-friendly error message
+    const errorMessage = error.message?.includes("API key") 
+      ? "Invalid/Missing API Key" 
+      : error.message?.includes("not found") 
+      ? "Stock not found" 
+      : "Service Unavailable";
+    throw new Error(errorMessage);
   }
 };

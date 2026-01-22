@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Stock, PortfolioSettings } from './types';
 import { DEFAULT_GROWTH, DEFAULT_REQ_RETURN, INITIAL_PORTFOLIO_SETTINGS } from './constants';
@@ -87,15 +88,8 @@ function App() {
   const handleRefreshStock = async (id: string, symbol: string) => {
     const trimmedSymbol = symbol.trim().toUpperCase();
     
-    // 1. Validation: Not empty
     if (!trimmedSymbol) {
       handleUpdateStock(id, { error: 'Symbol required' });
-      return;
-    }
-    
-    // 2. Validation: Alphabetic characters only
-    if (!/^[A-Z]+$/.test(trimmedSymbol)) {
-      handleUpdateStock(id, { error: 'A-Z only' });
       return;
     }
     
@@ -105,26 +99,21 @@ function App() {
     try {
       const data = await fetchStockData(trimmedSymbol);
       handleUpdateStock(id, { ...data, loading: false });
-    } catch (error) {
-      handleUpdateStock(id, { loading: false, error: 'Fetch failed' });
+    } catch (error: any) {
+      handleUpdateStock(id, { loading: false, error: error.message || 'Fetch failed' });
     }
   };
 
   const handleRefreshAll = async () => {
-    // Filter stocks with valid symbols before starting
-    const stocksToRefresh = stocks.filter(s => {
-      const sym = s.symbol.trim().toUpperCase();
-      return sym !== '' && /^[A-Z]+$/.test(sym);
-    });
-
+    const stocksToRefresh = stocks.filter(s => s.symbol.trim() !== '');
     if (stocksToRefresh.length === 0) return;
 
     setIsRefreshingAll(true);
     
-    // Run all refreshes in parallel
-    await Promise.all(
-      stocksToRefresh.map(s => handleRefreshStock(s.id, s.symbol))
-    );
+    // Process each stock refresh
+    for (const s of stocksToRefresh) {
+      await handleRefreshStock(s.id, s.symbol);
+    }
     
     setIsRefreshingAll(false);
   };
@@ -194,9 +183,8 @@ function App() {
             onRefreshStock={handleRefreshStock}
             />
             
-            {/* Disclaimer for Demo */}
             <div className="mt-4 text-xs text-slate-400 text-right">
-                * Data is retrieved using Google Search grounding for real-time accuracy.
+                * Data is retrieved using Google Search grounding via Gemini 3 Pro.
             </div>
         </div>
 
