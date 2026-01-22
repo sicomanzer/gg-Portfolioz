@@ -3,34 +3,27 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Stock } from '../types';
 
 export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> => {
-  const apiKey = process.env.API_KEY;
-  
-  if (!apiKey) {
-    throw new Error("Missing API_KEY. Please set it in your environment variables.");
-  }
-
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    // ใช้ process.env.API_KEY โดยตรงตามมาตรฐาน
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    const currentYear = new Date().getFullYear();
-    const targetFiscalYear = currentYear - 1;
+    const targetFiscalYear = new Date().getFullYear() - 1;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview', // Upgraded for better financial reasoning
-      contents: `Search and extract financial data for stock symbol "${symbol}" specifically for the FULL FISCAL YEAR (FY${targetFiscalYear}).
+      model: 'gemini-3-pro-preview',
+      contents: `You are a financial analyst. Search for the stock "${symbol}" on the Stock Exchange of Thailand (SET).
       
-      Required Data:
-      1. Current Market Price (latest available)
-      2. P/E Ratio (full-year basis)
+      Find and provide the following data for the FULL FISCAL YEAR ${targetFiscalYear}:
+      1. Latest Market Price (in THB)
+      2. P/E Ratio
       3. P/BV Ratio
       4. Debt to Equity Ratio (D/E)
-      5. Return on Equity (ROE) %
-      6. Earnings Per Share (EPS) for the full fiscal year
-      7. Total Annual Dividend per share paid for that year (D0)
-      8. Confirmation of the data year (e.g., "${targetFiscalYear}")
+      5. Return on Equity (ROE) as a percentage
+      6. Earnings Per Share (EPS)
+      7. Total Annual Dividend per share paid for the year ${targetFiscalYear}
+      8. Confirm the year of data (should be ${targetFiscalYear})
 
-      Note: If the company pays dividends multiple times a year, sum them up for the annual dividend.
-      Return as valid JSON.`,
+      Return ONLY a JSON object.`,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
@@ -52,7 +45,7 @@ export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> =>
     });
 
     const text = response.text;
-    if (!text) throw new Error("No data returned from AI service");
+    if (!text) throw new Error("AI returned empty content");
     
     const data = JSON.parse(text);
     
@@ -66,25 +59,20 @@ export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> =>
       .filter((s: any) => s !== null) || [];
 
     return {
-      price: data.currentPrice,
-      pe: data.pe,
-      pbv: data.pbv,
-      de: data.de,
-      roe: data.roe,
-      eps: data.eps,
-      dividendBaht: data.dividend,
-      yieldPercent: data.currentPrice > 0 ? (data.dividend / data.currentPrice) * 100 : 0,
+      price: data.currentPrice || 0,
+      pe: data.pe || 0,
+      pbv: data.pbv || 0,
+      de: data.de || 0,
+      roe: data.roe || 0,
+      eps: data.eps || 0,
+      dividendBaht: data.dividend || 0,
+      yieldPercent: (data.currentPrice > 0 && data.dividend > 0) ? (data.dividend / data.currentPrice) * 100 : 0,
       sources: sources,
-      referenceYear: data.referenceYear
+      referenceYear: data.referenceYear || targetFiscalYear.toString()
     };
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
-    // Return a more user-friendly error message
-    const errorMessage = error.message?.includes("API key") 
-      ? "Invalid/Missing API Key" 
-      : error.message?.includes("not found") 
-      ? "Stock not found" 
-      : "Service Unavailable";
-    throw new Error(errorMessage);
+    console.error("Stock Fetch Error:", error);
+    // ส่งผ่านข้อความ Error เพื่อนำไปแสดงใน UI
+    throw new Error(error.message || "Failed to fetch data");
   }
 };
