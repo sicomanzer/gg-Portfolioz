@@ -140,11 +140,23 @@ const StockRow: React.FC<Props> = ({ stock, moneyPerCompany, onUpdate, onDelete,
       <td className="p-2 border-r border-slate-100"><div className={readOnlyClass}>{formatNumber(stock.roe)}%</div></td>
       <td className="p-2 border-r border-slate-100"><div className={readOnlyClass}>{formatNumber(stock.eps)}</div></td>
 
+      {/* New Company Name Column */}
+      <td className="p-2 border-r border-slate-100">
+        <input 
+            type="text" 
+            value={stock.companyName || ''} 
+            disabled={stock.loading} 
+            onChange={(e) => handleChange('companyName', e.target.value)} 
+            className={inputClass.replace('text-center', 'text-left px-2')} 
+            placeholder="Company Name" 
+        />
+      </td>
+
       {/* DDM Inputs */}
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
         <input type="number" step="0.01" value={formatForInput(stock.dividendBaht)} disabled={stock.loading} onChange={handleDividendChange} className={inputClass} placeholder="0.00" />
       </td>
-      {/* Forecasted Dividend (D1) Cell - MOVED HERE */}
+      {/* Forecasted Dividend (D1) Cell */}
       <td className="p-2 bg-blue-50/30 border-r border-slate-100">
         <div className={`text-center font-bold text-sm transition-colors ${stock.loading ? 'text-slate-300' : 'text-blue-800'}`}>
           {stock.loading ? '-' : (result.d1 > 0 ? `฿${formatNumber(result.d1)}` : '฿0.00')}

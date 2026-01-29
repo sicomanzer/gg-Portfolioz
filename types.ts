@@ -16,6 +16,7 @@ export interface Stock {
   error?: string;
   sources?: { title: string; uri: string }[];
   referenceYear?: string;
+  companyName?: string;
 }
 
 export interface PortfolioSettings {

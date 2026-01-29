@@ -22,6 +22,7 @@ export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> =>
       6. Earnings Per Share (EPS)
       7. Total Annual Dividend per share paid for the year ${targetFiscalYear}
       8. Confirm the year of data (should be ${targetFiscalYear})
+      9. The English Company Name (brief, e.g. "PTT Public Company Limited" or "PTT")
 
       Return ONLY a JSON object.`,
       config: {
@@ -38,8 +39,9 @@ export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> =>
             eps: { type: Type.NUMBER },
             dividend: { type: Type.NUMBER },
             referenceYear: { type: Type.STRING },
+            companyName: { type: Type.STRING },
           },
-          required: ['currentPrice', 'pe', 'pbv', 'de', 'roe', 'eps', 'dividend', 'referenceYear'],
+          required: ['currentPrice', 'pe', 'pbv', 'de', 'roe', 'eps', 'dividend', 'referenceYear', 'companyName'],
         },
       },
     });
@@ -68,7 +70,8 @@ export const fetchStockData = async (symbol: string): Promise<Partial<Stock>> =>
       dividendBaht: data.dividend || 0,
       yieldPercent: (data.currentPrice > 0 && data.dividend > 0) ? (data.dividend / data.currentPrice) * 100 : 0,
       sources: sources,
-      referenceYear: data.referenceYear || targetFiscalYear.toString()
+      referenceYear: data.referenceYear || targetFiscalYear.toString(),
+      companyName: data.companyName || ''
     };
   } catch (error: any) {
     console.error("Stock Fetch Error:", error);
